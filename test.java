@@ -1,3 +1,114 @@
+666
+private void updateProgressBar(LinearLayout progressBarContainer, int camera, int mic, int loc) {
+    // Normalize percentages if the total is not 100
+    int total = camera + mic + loc;
+    if (total != 100) {
+        float normalizationFactor = (total == 0) ? 0 : 100.0f / total;
+        camera = Math.round(camera * normalizationFactor);
+        mic = Math.round(mic * normalizationFactor);
+        loc = Math.round(loc * normalizationFactor);
+
+        // Adjust for rounding errors
+        int normalizedTotal = camera + mic + loc;
+        if (normalizedTotal > 100) {
+            if (camera >= mic && camera >= loc) camera -= 1;
+            else if (mic >= loc) mic -= 1;
+            else loc -= 1;
+        } else if (normalizedTotal < 100) {
+            if (camera <= mic && camera <= loc) camera += 1;
+            else if (mic <= loc) mic += 1;
+            else loc += 1;
+        }
+    }
+
+    // Clear any previous views
+    progressBarContainer.removeAllViews();
+
+    // Check if all segments are zero
+    if (camera == 0 && mic == 0 && loc == 0) {
+        // Add a placeholder view
+        TextView emptyMessage = new TextView(this);
+        emptyMessage.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        emptyMessage.setText("No data available");
+        emptyMessage.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        emptyMessage.setTextColor(Color.GRAY);
+        progressBarContainer.addView(emptyMessage);
+        return;
+    }
+
+    // Determine segment visibility
+    boolean isCameraVisible = camera > 0;
+    boolean isMicVisible = mic > 0;
+    boolean isLocVisible = loc > 0;
+
+    // Add Camera Segment
+    if (isCameraVisible) {
+        boolean isFirstSegment = true; // Camera is the first visible segment
+        boolean isLastSegment = !isMicVisible && !isLocVisible; // Camera is also the last segment
+        addSegment(progressBarContainer, camera / 100.0f, "#4CAF50", isFirstSegment, isLastSegment);
+    }
+
+    // Add Microphone Segment
+    if (isMicVisible) {
+        boolean isFirstSegment = !isCameraVisible; // Mic is the first visible segment if Camera is skipped
+        boolean isLastSegment = !isLocVisible; // Mic is also the last segment if Location is skipped
+        addSegment(progressBarContainer, mic / 100.0f, "#2196F3", isFirstSegment, isLastSegment);
+    }
+
+    // Add Location Segment
+    if (isLocVisible) {
+        boolean isFirstSegment = !isCameraVisible && !isMicVisible; // Location is the first visible segment if others are skipped
+        boolean isLastSegment = true; // Location is always the last segment
+        addSegment(progressBarContainer, loc / 100.0f, "#9C27B0", isFirstSegment, isLastSegment);
+    }
+}
+
+/**
+ * Adds a segment to the progress bar container.
+ */
+private void addSegment(LinearLayout container, float weight, String color, boolean isStart, boolean isEnd) {
+    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+        0, LinearLayout.LayoutParams.MATCH_PARENT, weight
+    );
+
+    View segment = new View(this);
+    segment.setLayoutParams(params);
+
+    // Generate a drawable with proper corner radii
+    GradientDrawable segmentDrawable = createSegmentDrawable(color, isStart, isEnd);
+    segment.setBackground(segmentDrawable);
+
+    container.addView(segment);
+}
+
+/**
+ * Creates a GradientDrawable with the specified corner radii and color.
+ */
+private GradientDrawable createSegmentDrawable(String color, boolean isStart, boolean isEnd) {
+    float[] radii = new float[8]; // Holds the corner radii for each corner
+    if (isStart) {
+        // Top-left and bottom-left corners
+        radii[0] = 20; radii[1] = 20; // Adjust radius as per your design
+        radii[6] = 20; radii[7] = 20;
+    }
+    if (isEnd) {
+        // Top-right and bottom-right corners
+        radii[2] = 20; radii[3] = 20; // Adjust radius as per your design
+        radii[4] = 20; radii[5] = 20;
+    }
+
+    GradientDrawable drawable = new GradientDrawable();
+    drawable.setColor(Color.parseColor(color));
+    drawable.setCornerRadii(radii);
+    return drawable;
+}
+
+
+
+
 tajq
 private void updateProgressBar(LinearLayout progressBarContainer, int camera, int mic, int loc) {
     // Normalize percentages if the total is not 100
