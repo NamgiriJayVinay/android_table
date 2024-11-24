@@ -199,3 +199,93 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 }
+
+
+ppppp
+
+<LinearLayout
+    android:id="@+id/progressBarContainer"
+    android:layout_width="match_parent"
+    android:layout_height="30dp"
+    android:orientation="horizontal"
+    android:background="@drawable/progress_bar_background"
+    android:padding="2dp">
+
+    <!-- Placeholder for dynamically added views -->
+</LinearLayout>
+
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#E0E0E0" />
+    <corners android:radius="15dp" />
+</shape>
+
+
+import android.graphics.Color;
+import android.os.Bundle;
+import android.widget.LinearLayout;
+import android.view.View;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        LinearLayout progressBarContainer = findViewById(R.id.progressBarContainer);
+
+        // Example weights and colors
+        float[] weights = {0.3f, 0.4f, 0.2f, 0.1f}; // Example dynamic weights
+        String[] colors = {"#4CAF50", "#2196F3", "#9C27B0", "#BDBDBD"}; // Colors for segments
+
+        // Clear any previous views
+        progressBarContainer.removeAllViews();
+
+        // Calculate total weight
+        float totalWeight = 0;
+        for (float weight : weights) {
+            totalWeight += weight;
+        }
+
+        // Dynamically add segments
+        for (int i = 0; i < weights.length; i++) {
+            if (weights[i] > 0) { // Skip segments with zero/null weights
+                View segment = new View(this);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, weights[i]);
+                segment.setLayoutParams(params);
+                segment.setBackgroundColor(Color.parseColor(colors[i]));
+
+                // Apply corner radius for first and last segments
+                if (i == 0) {
+                    segment.setBackground(getResources().getDrawable(R.drawable.first_segment_background));
+                } else if (i == weights.length - 1) {
+                    segment.setBackground(getResources().getDrawable(R.drawable.last_segment_background));
+                } else {
+                    segment.setBackground(getResources().getDrawable(R.drawable.middle_segment_background));
+                }
+
+                progressBarContainer.addView(segment);
+            }
+        }
+    }
+}
+
+
+
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#4CAF50" />
+    <corners android:topLeftRadius="15dp" android:bottomLeftRadius="15dp" />
+</shape>
+
+
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#2196F3" />
+    <corners android:radius="0dp" />
+</shape>
+
+
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#9C27B0" />
+    <corners android:topRightRadius="15dp" android:bottomRightRadius="15dp" />
+</shape>
