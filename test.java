@@ -289,3 +289,95 @@ public class MainActivity extends AppCompatActivity {
     <solid android:color="#9C27B0" />
     <corners android:topRightRadius="15dp" android:bottomRightRadius="15dp" />
 </shape>
+
+
+p0p0p0
+import android.graphics.Color;
+import android.os.Bundle;
+import android.widget.LinearLayout;
+import android.view.View;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        LinearLayout progressBarContainer = findViewById(R.id.progressBarContainer);
+
+        // Example percentages for camera, microphone, and location
+        int cameraPercentage = 30; // Example: 30%
+        int microphonePercentage = 50; // Example: 50%
+        int locationPercentage = 40; // Example: 40%
+
+        // Call the function to update the progress bar
+        updateProgressBar(progressBarContainer, cameraPercentage, microphonePercentage, locationPercentage);
+    }
+
+    private void updateProgressBar(LinearLayout progressBarContainer, int camera, int mic, int loc) {
+        // Normalize percentages if the total is not 100
+        int total = camera + mic + loc;
+        if (total != 100) {
+            float normalizationFactor = 100.0f / total;
+            camera = Math.round(camera * normalizationFactor);
+            mic = Math.round(mic * normalizationFactor);
+            loc = Math.round(loc * normalizationFactor);
+
+            // Adjust for rounding errors to ensure the total equals 100
+            int normalizedTotal = camera + mic + loc;
+            if (normalizedTotal > 100) {
+                // Reduce the largest segment by 1
+                if (camera >= mic && camera >= loc) camera -= 1;
+                else if (mic >= loc) mic -= 1;
+                else loc -= 1;
+            } else if (normalizedTotal < 100) {
+                // Increase the smallest segment by 1
+                if (camera <= mic && camera <= loc) camera += 1;
+                else if (mic <= loc) mic += 1;
+                else loc += 1;
+            }
+        }
+
+        // Clear any previous views
+        progressBarContainer.removeAllViews();
+
+        // Percentages converted to weights (0-1 range)
+        float cameraWeight = camera / 100.0f;
+        float micWeight = mic / 100.0f;
+        float locWeight = loc / 100.0f;
+
+        // Colors for each segment
+        String[] colors = {"#4CAF50", "#2196F3", "#9C27B0"}; // Camera, Microphone, Location
+
+        // Add Camera Segment
+        addSegment(progressBarContainer, cameraWeight, colors[0], true, false);
+
+        // Add Microphone Segment
+        addSegment(progressBarContainer, micWeight, colors[1], false, false);
+
+        // Add Location Segment
+        addSegment(progressBarContainer, locWeight, colors[2], false, true);
+    }
+
+    private void addSegment(LinearLayout container, float weight, String color, boolean isFirst, boolean isLast) {
+        if (weight > 0) {
+            View segment = new View(this);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, weight);
+            segment.setLayoutParams(params);
+            segment.setBackgroundColor(Color.parseColor(color));
+
+            // Apply corner radius for the first and last segments
+            if (isFirst) {
+                segment.setBackground(getResources().getDrawable(R.drawable.first_segment_background));
+            } else if (isLast) {
+                segment.setBackground(getResources().getDrawable(R.drawable.last_segment_background));
+            } else {
+                segment.setBackground(getResources().getDrawable(R.drawable.middle_segment_background));
+            }
+
+            container.addView(segment);
+        }
+    }
+}
