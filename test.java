@@ -144,3 +144,10 @@
     </TableRow>
 
 </TableLayout>
+
+
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@android:color/white" />
+    <stroke android:width="1dp" android:color="#CCCCCC" /> <!-- Border color and thickness -->
+    <corners android:radius="4dp" /> <!-- Rounded corners for each cell -->
+</shape>
