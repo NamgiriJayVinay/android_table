@@ -1,3 +1,109 @@
+kai
+
+
+import android.graphics.Color;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.LinearLayout;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        LinearLayout progressBarContainer = findViewById(R.id.progressBarContainer);
+
+        // Example percentages for camera, microphone, and location
+        int cameraPercentage = 50; // Example: 50%
+        int microphonePercentage = 0; // Example: 0% (mic skipped)
+        int locationPercentage = 50; // Example: 50%
+
+        // Call the function to update the progress bar
+        updateProgressBar(progressBarContainer, cameraPercentage, microphonePercentage, locationPercentage);
+    }
+
+    private void updateProgressBar(LinearLayout progressBarContainer, int camera, int mic, int loc) {
+        // Normalize percentages if the total is not 100
+        int total = camera + mic + loc;
+        if (total != 100) {
+            float normalizationFactor = 100.0f / total;
+            camera = Math.round(camera * normalizationFactor);
+            mic = Math.round(mic * normalizationFactor);
+            loc = Math.round(loc * normalizationFactor);
+
+            // Adjust for rounding errors to ensure the total equals 100
+            int normalizedTotal = camera + mic + loc;
+            if (normalizedTotal > 100) {
+                // Reduce the largest segment by 1
+                if (camera >= mic && camera >= loc) camera -= 1;
+                else if (mic >= loc) mic -= 1;
+                else loc -= 1;
+            } else if (normalizedTotal < 100) {
+                // Increase the smallest segment by 1
+                if (camera <= mic && camera <= loc) camera += 1;
+                else if (mic <= loc) mic += 1;
+                else loc += 1;
+            }
+        }
+
+        // Clear any previous views
+        progressBarContainer.removeAllViews();
+
+        // Determine segment visibility and corner radius rules
+        boolean isCameraVisible = camera > 0;
+        boolean isMicVisible = mic > 0;
+        boolean isLocVisible = loc > 0;
+
+        // Add Camera Segment
+        if (isCameraVisible) {
+            boolean isFirstSegment = true; // Camera is the first visible segment
+            boolean isLastSegment = !isMicVisible && !isLocVisible; // Camera is also the last segment
+            addSegment(progressBarContainer, camera / 100.0f, "#4CAF50", isFirstSegment, isLastSegment);
+        }
+
+        // Add Microphone Segment
+        if (isMicVisible) {
+            boolean isFirstSegment = !isCameraVisible; // Mic is the first visible segment if Camera is skipped
+            boolean isLastSegment = !isLocVisible; // Mic is also the last segment if Location is skipped
+            addSegment(progressBarContainer, mic / 100.0f, "#2196F3", isFirstSegment, isLastSegment);
+        }
+
+        // Add Location Segment
+        if (isLocVisible) {
+            boolean isFirstSegment = !isCameraVisible && !isMicVisible; // Location is the first visible segment if others are skipped
+            boolean isLastSegment = true; // Location is always the last segment
+            addSegment(progressBarContainer, loc / 100.0f, "#9C27B0", isFirstSegment, isLastSegment);
+        }
+    }
+
+    private void addSegment(LinearLayout container, float weight, String color, boolean isFirst, boolean isLast) {
+        if (weight > 0) {
+            View segment = new View(this);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, weight);
+            segment.setLayoutParams(params);
+            segment.setBackgroundColor(Color.parseColor(color));
+
+            // Apply corner radius for the first and last segments
+            if (isFirst && isLast) {
+                segment.setBackground(getResources().getDrawable(R.drawable.first_last_segment_background));
+            } else if (isFirst) {
+                segment.setBackground(getResources().getDrawable(R.drawable.first_segment_background));
+            } else if (isLast) {
+                segment.setBackground(getResources().getDrawable(R.drawable.last_segment_background));
+            } else {
+                segment.setBackground(getResources().getDrawable(R.drawable.middle_segment_background));
+            }
+
+            container.addView(segment);
+        }
+    }
+}
+
+
+
 <TableLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
