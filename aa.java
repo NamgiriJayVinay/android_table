@@ -210,7 +210,21 @@
       
         });
 
-    
+    ans
+// Method to adjust the height of a View dynamically
+private void adjustCardHeight(CardViewHolder holder, String fullText, String collapsedText) {
+    // Measure the height of the TextView with collapsed and expanded text
+    holder.messageTextView.setText(collapsedText);
+    holder.messageTextView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+    int collapsedHeight = holder.messageTextView.getMeasuredHeight();
 
+    holder.messageTextView.setText(fullText);
+    holder.messageTextView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+    int expandedHeight = holder.messageTextView.getMeasuredHeight();
 
+    // Dynamically set the height of the cardBackground based on the TextView's content
+    ViewGroup.LayoutParams layoutParams = holder.cardBackground.getLayoutParams();
+    layoutParams.height = expandedHeight > collapsedHeight ? expandedHeight + 50 : collapsedHeight + 50; // Add padding for better spacing
+    holder.cardBackground.setLayoutParams(layoutParams);
+}
   
