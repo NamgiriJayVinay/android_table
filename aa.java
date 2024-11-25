@@ -1,4 +1,119 @@
-<?xml version="1.0" encoding="utf-8"?>
+package com.example.sensors_app1;
+
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.Service;
+import android.content.Intent;
+import android.hardware.Camera;
+import android.os.Build;
+import android.os.Handler;
+import android.os.IBinder;
+import android.util.Log;
+import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
+
+public class CameraService extends Service {
+    private static final String TAG = "CameraService";
+
+    private static final String CHANNEL_ID = "CameraServiceChannel";
+    private Camera camera;
+    private Handler handler = new Handler();
+    private int iterationCount = 0;
+    private static final int TOTAL_ITERATIONS = 4;
+    private static final int CAMERA_DURATION = 1000; // Duration to keep the camera open in milliseconds
+    private static final int WAIT_DURATION = 6000; // Duration to wait before reopening the camera in milliseconds
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        createNotificationChannel();
+
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Camera Service")
+                .setContentText("Camera is running")
+                .setSmallIcon(R.drawable.ic_camera) // Replace with your app's icon
+                .build();
+        startForeground(1, notification);
+
+        Log.d(TAG, "Camera service created");
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        startCameraCycle();
+        return START_NOT_STICKY;
+    }
+
+    private void startCameraCycle() {
+        if (iterationCount < TOTAL_ITERATIONS) {
+            iterationCount++;
+            Log.d(TAG, "Iteration: " + iterationCount);
+            openCamera();
+
+            // Schedule to close the camera after CAMERA_DURATION
+            handler.postDelayed(this::closeCamera, CAMERA_DURATION);
+
+            // Schedule next cycle after WAIT_DURATION
+            handler.postDelayed(this::startCameraCycle, CAMERA_DURATION + WAIT_DURATION);
+        } else {
+            stopSelf();
+        }
+    }
+
+    private void openCamera() {
+        try {
+            if (camera == null) {
+                camera = Camera.open();
+                Log.d(TAG, "Camera opened");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to open camera", e);
+        }
+    }
+
+    private void closeCamera() {
+        if (camera != null) {
+            camera.release();
+            camera = null;
+            Log.d(TAG, "Camera closed");
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        closeCamera();
+        Log.d(TAG, "Camera service destroyed");
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel serviceChannel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Camera Service Channel",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(serviceChannel);
+            }
+        }
+    }
+}
+
+
+
+
+
+
+ppp<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
