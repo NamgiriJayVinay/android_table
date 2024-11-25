@@ -345,3 +345,129 @@ public class CameraService extends Service {
         }
     }
 }
+
+
+
+package com.example.sensors_app1;
+
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.Service;
+import android.content.Intent;
+import android.media.MediaRecorder;
+import android.os.Build;
+import android.os.Handler;
+import android.os.IBinder;
+import android.util.Log;
+import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
+import java.io.IOException;
+
+public class MicrophoneService extends Service {
+    private static final String TAG = "MicrophoneService";
+
+    private static final String CHANNEL_ID = "MicrophoneServiceChannel";
+    private MediaRecorder mediaRecorder;
+    private Handler handler = new Handler();
+    private int iterationCount = 0;
+    private static final int TOTAL_ITERATIONS = 4;
+    private static final int MIC_DURATION = 1000; // Duration for microphone to stay on in milliseconds
+    private static final int WAIT_DURATION = 6000; // Duration to wait before starting the microphone again in milliseconds
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        createNotificationChannel();
+
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Microphone Service")
+                .setContentText("Microphone is running")
+                .setSmallIcon(R.drawable.ic_microphone) // Replace with your app's icon
+                .build();
+        startForeground(1, notification);
+
+        Log.d(TAG, "Microphone service created");
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        startMicrophoneCycle();
+        return START_NOT_STICKY;
+    }
+
+    private void startMicrophoneCycle() {
+        if (iterationCount < TOTAL_ITERATIONS) {
+            iterationCount++;
+            Log.d(TAG, "Iteration: " + iterationCount);
+            startRecording();
+
+            // Schedule to stop microphone recording after MIC_DURATION
+            handler.postDelayed(this::stopRecording, MIC_DURATION);
+
+            // Schedule next cycle after WAIT_DURATION
+            handler.postDelayed(this::startMicrophoneCycle, MIC_DURATION + WAIT_DURATION);
+        } else {
+            stopSelf();
+        }
+    }
+
+    private void startRecording() {
+        if (mediaRecorder == null) {
+            mediaRecorder = new MediaRecorder();
+            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            mediaRecorder.setOutputFile(getFilesDir().getAbsolutePath() + "/mic_recording.3gp");
+            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+
+            try {
+                mediaRecorder.prepare();
+                mediaRecorder.start();
+                Log.d(TAG, "Microphone recording started");
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to start microphone recording", e);
+            }
+        }
+    }
+
+    private void stopRecording() {
+        if (mediaRecorder != null) {
+            try {
+                mediaRecorder.stop();
+                mediaRecorder.reset();
+                mediaRecorder.release();
+                mediaRecorder = null;
+                Log.d(TAG, "Microphone recording stopped");
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to stop microphone recording", e);
+            }
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        stopRecording();
+        Log.d(TAG, "Microphone service destroyed");
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel serviceChannel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Microphone Service Channel",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(serviceChannel);
+            }
+        }
+    }
+}
