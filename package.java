@@ -594,3 +594,135 @@ public class FaceRecognizer {
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 </resources>
+
+
+
+// FaceEmbeddingsStorage.java
+package com.example.facerecognition;
+
+import android.content.Context;
+import android.util.Log;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class FaceEmbeddingsStorage {
+    private static final String EMBEDDINGS_FILE = "face_embeddings.dat";
+    private static final String TAG = "FaceEmbeddingsStorage";
+    private final Context context;
+
+    public FaceEmbeddingsStorage(Context context) {
+        this.context = context;
+    }
+
+    public void saveEmbeddings(List<float[]> embeddings, String userName) {
+        try {
+            FileOutputStream fos = context.openFileOutput(EMBEDDINGS_FILE, Context.MODE_PRIVATE);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            
+            // Save username
+            oos.writeUTF(userName);
+            
+            // Save number of embeddings
+            oos.writeInt(embeddings.size());
+            
+            // Save each embedding array
+            for (float[] embedding : embeddings) {
+                oos.writeInt(embedding.length);
+                for (float value : embedding) {
+                    oos.writeFloat(value);
+                }
+            }
+            
+            oos.close();
+            fos.close();
+            Log.d(TAG, "Embeddings saved successfully for user: " + userName);
+        } catch (IOException e) {
+            Log.e(TAG, "Error saving embeddings: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public EmbeddingsData loadEmbeddings() {
+        List<float[]> embeddings = new ArrayList<>();
+        String userName = "";
+        
+        try {
+            FileInputStream fis = context.openFileInput(EMBEDDINGS_FILE);
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            
+            // Read username
+            userName = ois.readUTF();
+            
+            // Read number of embeddings
+            int numEmbeddings = ois.readInt();
+            
+            // Read each embedding array
+            for (int i = 0; i < numEmbeddings; i++) {
+                int embeddingLength = ois.readInt();
+                float[] embedding = new float[embeddingLength];
+                for (int j = 0; j < embeddingLength; j++) {
+                    embedding[j] = ois.readFloat();
+                }
+                embeddings.add(embedding);
+            }
+            
+            ois.close();
+            fis.close();
+            Log.d(TAG, "Embeddings loaded successfully for user: " + userName);
+        } catch (IOException e) {
+            Log.e(TAG, "Error loading embeddings: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return new EmbeddingsData(embeddings, userName);
+    }
+
+    public static class EmbeddingsData {
+        public final List<float[]> embeddings;
+        public final String userName;
+
+        public EmbeddingsData(List<float[]> embeddings, String userName) {
+            this.embeddings = embeddings;
+            this.userName = userName;
+        }
+    }
+}
+
+// Update MainActivity.java - Add these modifications:
+
+public class MainActivity extends AppCompatActivity {
+    // Add new field
+    private FaceEmbeddingsStorage embeddingsStorage;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // ... existing code ...
+        
+        // Initialize storage
+        embeddingsStorage = new FaceEmbeddingsStorage(this);
+        
+        // Load saved embeddings
+        loadSavedEmbeddings();
+    }
+
+    private void loadSavedEmbeddings() {
+        FaceEmbeddingsStorage.EmbeddingsData data = embeddingsStorage.loadEmbeddings();
+        if (!data.embeddings.isEmpty()) {
+            storedEmbeddings = data.embeddings;
+            userName = data.userName;
+            Toast.makeText(this, "Loaded embeddings for: " + userName, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void storeFaceEmbeddings() {
+        // ... existing code for processing images ...
+
+        // After processing all images and getting embeddings, save them
+        if (!storedEmbeddings.isEmpty()) {
+            embeddingsStorage.saveEmbeddings(storedEmbeddings, userName);
+            Toast.makeText(this, "Face embeddings stored successfully", Toast.LENGTH_SHORT).show();
+        }
+    }
+}
